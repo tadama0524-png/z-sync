@@ -72,7 +72,10 @@
 
         #map-container { height: 40vh; min-height: 180px; width: 100%; position: relative; border-bottom: 1px solid var(--glass-border); }
         #map { height: 100%; width: 100%; background: #1a1a1a; }
-        body:not(.light-mode) .map-tiles { filter: brightness(0.68) contrast(1.2) saturate(0.65); }
+        body.dark-mode .map-tiles { filter: brightness(0.68) contrast(1.2) saturate(0.65); }
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-mode):not(.dark-mode) .map-tiles { filter: brightness(0.68) contrast(1.2) saturate(0.65); }
+        }
         .leaflet-control-attribution { background: rgba(0, 0, 0, 0.5) !important; color: rgba(255, 255, 255, 0.72); font-size: 9px; }
         .leaflet-control-attribution a { color: rgba(255, 255, 255, 0.9); }
         body.light-mode .leaflet-control-attribution { background: rgba(255, 255, 255, 0.75) !important; color: rgba(0, 0, 0, 0.62); }
@@ -210,22 +213,22 @@
 
         .custom-marker { background: var(--accent); border: 2.5px solid white; border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
         
-        :root {
-          color-scheme: light dark;
+        /* Follow the operating system until the user chooses a mode manually. */
+        body.light-mode { color-scheme: light; }
+        body.dark-mode { color-scheme: dark; }
+        @media (prefers-color-scheme: light) {
+            body:not(.light-mode):not(.dark-mode) {
+                --bg: #F2F2F7;
+                --glass-bg: rgba(255, 255, 255, 0.7);
+                --glass-border: rgba(0, 0, 0, 0.08);
+                --text: #000000;
+                --accent: #007AFF;
+                --input-text: #FFFFFF;
+                color-scheme: light;
+            }
         }
-
-        body {
-          background-color: #ffffff;
-          color: #1d1d1f;
-          transition: background-color 0.25s, color 0.25s;
-        }
-
-
         @media (prefers-color-scheme: dark) {
-          body {
-            background-color: #121212;
-            color: #f5f5f7;
-          }
+            body:not(.light-mode):not(.dark-mode) { color-scheme: dark; }
         }
 
     </style>
@@ -385,9 +388,14 @@
         }).addTo(map);
     }
 
-    function toggleMode() { 
-        document.body.classList.toggle('light-mode'); 
-        setMapTheme();
+    function toggleMode() {
+        const body = document.body;
+        const isCurrentlyLight = body.classList.contains('light-mode') ||
+            (!body.classList.contains('dark-mode') &&
+             window.matchMedia('(prefers-color-scheme: light)').matches);
+        body.classList.toggle('light-mode', !isCurrentlyLight);
+        body.classList.toggle('dark-mode', isCurrentlyLight);
+        // Do not recreate the Leaflet tile layer when switching appearance.
     }
 
     function initResizer() {
